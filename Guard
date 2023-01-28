@@ -1,0 +1,103 @@
+# pip install pyTelegramBotAPI
+# для Windows
+# pip install watchdog
+# для Linux
+# pip install pyinotify
+
+from platform import system
+import time
+
+import telebot
+#from config import token, user_id
+token = '5961679490:AAEGvKH2ZBCMqc8ce2vQkD3wGHIbjXzASV4'
+
+user_id = 355903639
+
+bot = telebot.TeleBot('5961679490:AAEGvKH2ZBCMqc8ce2vQkD3wGHIbjXzASV4')
+
+
+# функция для отправки сообщений
+# указываем тип сообщений
+# отправляем сообщение
+@bot.message_handler(content_types=['text'])
+def command(message):
+    bot.send_message(user_id, message)
+
+# функция отслеживания событий файловой системы Linux
+#def dog_file_lin():
+    # import pyinotify
+    #
+    # multi_event = pyinotify.IN_OPEN | pyinotify.IN_CREATE | pyinotify.IN_MOVED_FROM  # Мониторинг нескольких событий
+    # wm = pyinotify.WatchManager()
+    #
+    # class MyEventHandler(pyinotify.ProcessEvent):
+    #
+    #     def process_IN_OPEN(self, event):
+    #         command(f'OPEN: {event.pathname}')
+    #
+    #     def process_IN_MOVED_FROM(self, event):
+    #         command(f'MOVED_FROM: {event.pathname}')
+    #
+    #     def process_IN_CREATE(self, event):
+    #         command(f'CREATE: {event.pathname}')
+    #
+    # handler = MyEventHandler()
+    # notifier = pyinotify.Notifier(wm, handler)
+    #
+    # wm.add_watch('/home/kali/tmp', multi_event)  # Добавить отслеживаемый каталог и событие
+    # notifier.loop()
+
+
+# функция отслеживания событий файловой системы Windows
+def dog_file_win():
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler
+
+    class Handler(FileSystemEventHandler):
+        def on_created(self, event):
+            if event.is_directory:
+                command(f'Создана папка: {event.src_path}')
+            else:
+                command(f'Создан файл: {event.src_path}')
+
+        def on_deleted(self, event):
+            if event.is_directory:
+                command(f'Удалена папка: {event.src_path}')
+            else:
+                command(f'Удален файл: {event.src_path}')
+
+        def on_moved(self, event):
+            if event.is_directory:
+                command(f'Переименована папка: {event.src_path}')
+            else:
+                command(f'Переименован файл: {event.src_path}')
+
+        def on_modified(self, event):
+            if event.is_directory:
+                command(f'Изменена папка: {event.src_path}')
+            else:
+                command(f'Изменен файл: {event.src_path}')
+
+    observer = Observer()
+    observer.schedule(Handler(), path=r'D:/' , recursive=True)#прописать путь к контролируемому ресурсу
+    observer.start()
+
+    bot.polling()
+    try:
+        while True:
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
+
+
+# определение версии ОС
+def main():
+    if system() == "Windows":
+        dog_file_win()
+    # elif system() == "Linux":
+    #     dog_file_lin()
+
+
+if __name__ == '__main__':
+    main()
